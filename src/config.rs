@@ -1,3 +1,4 @@
+use crate::ExtraArgs;
 use anyhow::Result;
 use reqwest::header::HeaderMap;
 use reqwest::{Method, Url};
@@ -43,8 +44,6 @@ pub struct ResponseProfile {
     pub skip_body: Vec<String>,
 }
 
-pub struct DiffArgs {}
-
 impl DiffConfig {
     pub async fn load_yaml(path: &str) -> Result<Self> {
         let content = fs::read_to_string(path).await?;
@@ -61,7 +60,7 @@ impl DiffConfig {
 }
 
 impl DiffProfile {
-    pub fn diff(&self, _args: DiffArgs) -> Result<String> {
+    pub async fn diff(&self, args: ExtraArgs) -> Result<String> {
         // let res1 = req1.send(&args).await?;
         // let res2 = req2.send(&args).await?;
         //
@@ -70,6 +69,9 @@ impl DiffProfile {
         //
         // text_diff(&text1, &text2)
 
-        todo!()
+        println!("{:?}", self);
+        println!("{:?}", args);
+
+        Ok(("".to_string()))
     }
 }
