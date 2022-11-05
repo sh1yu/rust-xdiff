@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use clap::Parser;
 use rust_xdiff::cli::{Action, Args, RunArgs};
 use rust_xdiff::DiffConfig;
+use std::io::Write;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -23,6 +24,9 @@ async fn run(args: RunArgs) -> Result<()> {
         config_file
     ))?;
 
-    profile.diff(args.extra_params.into()).await?;
+    let output = profile.diff(args.extra_params.into()).await?;
+    let stdout = std::io::stdout();
+    let mut stdout = stdout.lock();
+    write!(stdout, "{}", output)?;
     Ok(())
 }
