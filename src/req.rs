@@ -1,5 +1,6 @@
 use crate::{ExtraArgs, ResponseProfile};
 use anyhow::{anyhow, Result};
+use dialoguer::Validator;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::{header, Client, Method, Response};
 use serde::{Deserialize, Serialize};
@@ -28,6 +29,22 @@ pub struct RequestProfile {
 pub struct ResponseExt(Response);
 
 impl RequestProfile {
+    pub fn new(
+        method: Method,
+        url: Url,
+        params: Option<serde_json::Value>,
+        headers: HeaderMap,
+        body: Option<serde_json::Value>,
+    ) -> Self {
+        Self {
+            method,
+            url,
+            params,
+            headers,
+            body,
+        }
+    }
+
     pub async fn send(&self, args: &ExtraArgs) -> Result<ResponseExt> {
         let (headers, query, body) = self.generate(args)?;
         let res = Client::new()
@@ -71,6 +88,36 @@ impl RequestProfile {
         };
 
         Ok((headers, query, body))
+    }
+
+    pub(crate) fn validate(&self) -> Result<()> {
+        if let Some(params) = self.params.as_ref() {
+            if !params.is_object() {
+                Err(anyhow!(
+                    "params must be an object:\n{}",
+                    serde_yaml::to_string(params)?
+                ))?;
+            }
+        }
+        if let Some(body) = self.body.as_ref() {
+            if !body.is_object() {
+                Err(anyhow!(
+                    "body must be an object:\n{}",
+                    serde_yaml::to_string(body)?
+                ))?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl FromStr for RequestProfile {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let mut profile: RequestProfile = serde_yaml::from_str(s)?;
+        profile.validate()?;
+        Ok(profile)
     }
 }
 
